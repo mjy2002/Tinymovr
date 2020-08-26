@@ -19,16 +19,12 @@ class CAN(IFace):
     def send_new(self, node_id, endpoint_id, rtr=False, payload=None):
         self.bus.send(self.create_frame(node_id, endpoint_id, rtr, payload))
 
-    def receive(self, node_id, endpoint_id, timeout=0.2):
+    def receive(self, node_id, endpoint_id):
         frame_id = self.create_id(node_id, endpoint_id)
-        frame = self.bus.recv(timeout=timeout)
-        if frame:
+        for frame in self.bus:
             if frame.arbitration_id == frame_id:
                 return frame.data
-            else:
-                raise IOError("Received id mismatch: " + str(frame.arbitration_id))
-        else:
-            raise TimeoutError()
+        raise IOError("Received id mismatch: " + str(frame.arbitration_id))
 
     def create_frame(self, node_id, endpoint_id, rtr=False, payload=None):
         '''
