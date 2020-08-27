@@ -26,11 +26,7 @@ class CANNode:
             endpoint_id, rtr, payload))
 
     def receive(self, endpoint_id):
-        frames = [frame for frame in self.bus]
-        if len(frames) > 1:
-            raise Exception("Multiple frames received")
-        elif len(frames) == 0:
-            raise Exception("No frames received")
-        return frames[0].data
+        for frame in self.bus:
+            return frame.data
 
 
