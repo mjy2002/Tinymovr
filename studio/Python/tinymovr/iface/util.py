@@ -40,7 +40,7 @@ def create_id(node_id, endpoint_id):
     '''
     Generate a CAN id from node and endpoint ids
     '''
-    return filter_id_from_node_id() | endpoint_id
+    return filter_id_from_node_id(node_id) | endpoint_id
 
 def filter_id_from_node_id(node_id):
     '''

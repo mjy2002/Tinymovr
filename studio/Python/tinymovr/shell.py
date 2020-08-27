@@ -52,11 +52,10 @@ def spawn_shell():
     bitrate = int(arguments['--bitrate'])
     if chan == 'auto':
         chan = guess_channel(iface_hint=iface_name)
-    bus = can.Bus(bustype=iface_name, channel=chan, bitrate=bitrate)
-    
     tms = {}
     for node_id in range(1, 2):
         try:
+            bus = can.Bus(bustype=iface_name, channel=chan, bitrate=bitrate)
             iface = CANNode(node_id, bus)
             tm = UserWrapper(node_id=node_id, iface=iface)
             tm_string = base_name+str(node_id)

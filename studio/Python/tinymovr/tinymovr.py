@@ -50,13 +50,13 @@ class Tinymovr:
                             slack_defaults = d["defaults"][-slack:]
                             f_args = f_args + slack_defaults
                         payload = self.codec.serialize(f_args, *d["types"])
-                        self.iface.send_new(self.node_id, d["ep_id"], payload=payload)
+                        self.iface.send_new(d["ep_id"], payload=payload)
                     else:
-                        self.iface.send_new(self.node_id, d["ep_id"])
+                        self.iface.send_new(d["ep_id"])
                 return wrapper
             elif d["type"] == "r":
-                self.iface.send_new(self.node_id, d["ep_id"], rtr=True)
-                payload = self.iface.receive(self.node_id, d["ep_id"])
+                self.iface.send_new(d["ep_id"], rtr=True)
+                payload = self.iface.receive(d["ep_id"])
                 values = self.codec.deserialize(payload, *d["types"])
                 if len(values) == 1:
                     return values[0]
