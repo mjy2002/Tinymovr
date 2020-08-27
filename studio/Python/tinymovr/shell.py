@@ -33,7 +33,7 @@ from docopt import docopt
 
 from tinymovr.iface import guess_channel
 from tinymovr import UserWrapper
-from tinymovr.iface import CAN
+from tinymovr.iface import CANNode
 
 shell_name = 'Tinymovr Shell Utility'
 base_name = "tm"
@@ -53,14 +53,14 @@ def spawn_shell():
     if chan == 'auto':
         chan = guess_channel(iface_hint=iface_name)
     bus = can.Bus(bustype=iface_name, channel=chan, bitrate=bitrate)
-    iface = CAN(bus)
-
+    
     tms = {}
     for node_id in range(1, 2):
         try:
+            iface = CANNode(node_id, bus)
             tm = UserWrapper(node_id=node_id, iface=iface)
             tm_string = base_name+str(node_id)
-            logger.info("Connected to " + tm_string)
+            print("Connected to " + tm_string)
             tms[tm_string] = tm
         except TimeoutError:
             logger.error("Node " + str(node_id) + " timed out")
@@ -74,7 +74,7 @@ def spawn_shell():
         print(shell_name + ' ' + str(version))
         print("Access Tinymovr instances as tmx, where x is the index starting from 1")
         print("e.g. the first Tinymovr instance will be tm1.")
-        print("Instances are also available by index in the tms list.")
+        print("Instances are also available by index in the `tms` list.")
         IPython.start_ipython(argv=["--no-banner"], user_ns=tms)
         logger.debug("Exiting shell...")
 

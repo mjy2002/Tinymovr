@@ -17,7 +17,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 import copy
 from pkg_resources import parse_version
-from tinymovr.iface import CAN, CANBusCodec, DataType
+from tinymovr.iface import CANNode, CANBusCodec, DataType
 from tinymovr import Endpoints
 from tinymovr.attr_object import AttrObject
 
