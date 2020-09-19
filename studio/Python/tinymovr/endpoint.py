@@ -16,7 +16,49 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 from tinymovr.iface import DataType
 
-Endpoints = {
+
+class Endpoint:
+
+    def __init__(self, descriptor, iface):
+        self.descriptor = descriptor
+        self.iface = iface
+
+
+class ReadEndpoint(Endpoint):
+
+    def value(self):
+        with self.descriptor as d:
+            self.iface.send_new(self.node_id, d["ep_id"], rtr=True)
+            payload = self.iface.receive(self.node_id, d["ep_id"])
+            values = self.codec.deserialize(payload, *d["types"])
+            if len(values) == 1:
+                return values[0]
+            else:
+                return AttrObject(d["labels"], values)
+
+
+class WriteEndpoint(Endpoint):
+
+    def __call__(self, *args, **kwargs):
+        assert(len(args) == 0 or len(kwargs) == 0)
+        with self.descriptor as d:
+            if len(kwargs) > 0:
+                assert("labels" in d)
+                f_args = [kwargs[k] for k in d["labels"]]
+            else:
+                f_args = copy.copy(args)
+            if "types" in d:
+                slack = len(d["types"]) - len(f_args)
+                if slack > 0:
+                    slack_defaults = d["defaults"][-slack:]
+                    f_args = f_args + slack_defaults
+                payload = self.codec.serialize(f_args, *d["types"])
+                self.iface.send_new(self.node_id, d["ep_id"], payload=payload)
+            else:
+                self.iface.send_new(self.node_id, d["ep_id"])
+
+
+endpoints_map: Dict[str, Dict] = {
     "nmt":
     {
         "description": "CANOpen NMT Message",

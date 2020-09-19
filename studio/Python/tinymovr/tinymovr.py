@@ -20,12 +20,12 @@ import numbers
 import json
 from pkg_resources import parse_version
 from tinymovr.iface import CAN, CANBusCodec, DataType
-from tinymovr import Endpoints
+from tinymovr import ReadEndpoint, WriteEndpoint, endpoints_map
 from tinymovr.attr_object import AttrObject
 
 class Tinymovr:
 
-    def __init__(self, node_id, iface, codec=CANBusCodec(), eps=Endpoints):
+    def __init__(self, node_id, iface, codec=CANBusCodec(), eps=endpoints_map):
         self.node_id = node_id
         self.iface = iface
         self.codec = codec
@@ -44,33 +44,10 @@ class Tinymovr:
         if attr in self.endpoints:
             d = self.endpoints[attr]
             if d["type"] == "w":
-                # This is a write-type endpoint
-                def wrapper(*args, **kwargs):
-                    assert(len(args) == 0 or len(kwargs) == 0)
-                    if len(kwargs) > 0:
-                        assert("labels" in d)
-                        f_args = [kwargs[k] for k in d["labels"]]
-                    else:
-                        f_args = copy.copy(args)
-                    if "types" in d:
-                        slack = len(d["types"]) - len(f_args)
-                        if slack > 0:
-                            slack_defaults = d["defaults"][-slack:]
-                            f_args = f_args + slack_defaults
-                        payload = self.codec.serialize(f_args, *d["types"])
-                        self.iface.send_new(self.node_id, d["ep_id"], payload=payload)
-                    else:
-                        self.iface.send_new(self.node_id, d["ep_id"])
-                return wrapper
+                return WriteEndpoint(d, self.iface)
             elif d["type"] == "r":
-                # This is a read-type endpoint
-                self.iface.send_new(self.node_id, d["ep_id"], rtr=True)
-                payload = self.iface.receive(self.node_id, d["ep_id"])
-                values = self.codec.deserialize(payload, *d["types"])
-                if len(values) == 1:
-                    return values[0]
-                else:
-                    return AttrObject(d["labels"], values)
+                return ReadEndpoint(d, self.iface)
+            raise AttributeError("Invalid attribute type (not in {'r', 'w', 'rw'})")
 
     def __dir__(self):
         return list(self.endpoints.keys())
