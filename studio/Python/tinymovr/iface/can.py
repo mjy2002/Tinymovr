@@ -12,9 +12,8 @@ class CAN(IFace):
     '''
     Class implementing a CAN bus interface 
     '''
-    def send(self, msg, delay=0.001):
+    def send(self, msg):
         self.bus.send(msg)
-        time.sleep(delay)
 
     def send_new(self, node_id, endpoint_id, rtr=False, payload=None):
         self.bus.send(self.create_frame(node_id, endpoint_id, rtr, payload))
