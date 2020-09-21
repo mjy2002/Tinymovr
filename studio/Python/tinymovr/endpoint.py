@@ -73,7 +73,10 @@ class EndpointObject:
         return self.get_values()[name]
 
     def __repr__(self):
-        return str(self.get_values())
+        try:
+            return str(self.get_values())
+        except AssertionError:
+            return "s"
 
 
 endpoints_map = {

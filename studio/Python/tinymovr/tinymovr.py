@@ -28,7 +28,6 @@ class Tinymovr:
         self.node_id = node_id
         self.iface = iface
         self.codec = codec
-        self._encoder_cpr = -1
 
         self.endpoints = {}
         # Temporarily assign to self.endpoints purely for convenience
@@ -125,10 +124,3 @@ class Tinymovr:
         else:
             raise TypeError("Mismatch in passed arguments")
         return kwargs
-
-    @property
-    def encoder_cpr(self):
-        if self._encoder_cpr < 2048:
-            self._encoder_cpr = self.motor_info.encoder_cpr
-        assert(self._encoder_cpr >= 2048)
-        return self._encoder_cpr
