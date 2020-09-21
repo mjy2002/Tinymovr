@@ -10,5 +10,5 @@ class Test(can.BusABC):
     def send(self, msg):
         print(msg)
 
-    def _recv_internal(self):
-        pass
+    def _recv_internal(self, timeout):
+        return '', True
