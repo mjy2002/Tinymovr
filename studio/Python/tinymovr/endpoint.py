@@ -19,14 +19,14 @@ from tinymovr.iface import DataType
 
 class EndpointObject:
 
-    def __init__(self, descriptor, iface):
+    def __init__(self, parent, descriptor):
+        self._parent = parent
         self._descriptor = descriptor
-        self.iface = iface
 
     def value(self):
         assert (self.readable), "Endpoint is not writeable"
         d = self._descriptor
-        self.iface.send_new(self.node_id, d["ep_id"], rtr=True)
+        self.iface.send_new(self._parent.node_id, d["ep_id"], rtr=True)
         payload = self.iface.receive(self.node_id, d["ep_id"])
         return self.codec.deserialize(payload, *d["types"])
 
@@ -57,11 +57,16 @@ class EndpointObject:
     def writeable(self):
         return "w" in self._descriptor["type"]
 
-    def __getattr__(self, name):
-        pass
+    @property
+    def iface(self):
+        return self._parent.iface
 
-    def __setattr__(self, name, value):
-        pass       
+    @property
+    def node_id(self):
+        return self._parent.node_id
+    
+    def __getattr__(self, name):
+        return self.value()[name]
 
     def __repr__(self):
         return str(self.value())

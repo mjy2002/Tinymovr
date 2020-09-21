@@ -43,7 +43,7 @@ class Tinymovr:
 
     def __getattr__(self, attr):
         if attr not in self.endpoints:
-            d = EndpointObject(self.endpoint_descriptors[attr], self.iface)
+            d = EndpointObject(self, self.endpoint_descriptors[attr])
             self.endpoints[attr] = d
         return self.endpoints[attr]
 
