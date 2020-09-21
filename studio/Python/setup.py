@@ -35,6 +35,9 @@ setuptools.setup(
         "console_scripts": [
             "tinymovr=tinymovr.shell:spawn_shell"
         ],
+        "can.interface": [
+            "tinymovr_test=tinymovr.iface:Test",
+        ]
     }
     
 )
