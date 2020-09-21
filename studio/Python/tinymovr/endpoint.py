@@ -23,25 +23,17 @@ class Endpoint:
         self.descriptor = descriptor
         self.iface = iface
 
-
-class ReadEndpoint(Endpoint):
-
-    def value(self):
+    def values(self):
         with self.descriptor as d:
+            assert("r" in d["type"], "Endpoint is not writeable")
             self.iface.send_new(self.node_id, d["ep_id"], rtr=True)
             payload = self.iface.receive(self.node_id, d["ep_id"])
-            values = self.codec.deserialize(payload, *d["types"])
-            if len(values) == 1:
-                return values[0]
-            else:
-                return AttrObject(d["labels"], values)
-
-
-class WriteEndpoint(Endpoint):
+            return self.codec.deserialize(payload, *d["types"])
 
     def __call__(self, *args, **kwargs):
         assert(len(args) == 0 or len(kwargs) == 0)
         with self.descriptor as d:
+            assert("w" in d["type"], "Endpoint is not writeable")
             if len(kwargs) > 0:
                 assert("labels" in d)
                 f_args = [kwargs[k] for k in d["labels"]]
@@ -56,6 +48,12 @@ class WriteEndpoint(Endpoint):
                 self.iface.send_new(self.node_id, d["ep_id"], payload=payload)
             else:
                 self.iface.send_new(self.node_id, d["ep_id"])
+
+    def __getattr__(self, name):
+            return self.values()[name]
+
+    def __repr__(self):
+        return str(self.values())
 
 
 endpoints_map: Dict[str, Dict] = {

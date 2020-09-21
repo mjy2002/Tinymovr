@@ -20,8 +20,7 @@ import numbers
 import json
 from pkg_resources import parse_version
 from tinymovr.iface import CAN, CANBusCodec, DataType
-from tinymovr import ReadEndpoint, WriteEndpoint, endpoints_map
-from tinymovr.attr_object import AttrObject
+from tinymovr import Endpoint, endpoints_map
 
 class Tinymovr:
 
@@ -32,25 +31,24 @@ class Tinymovr:
         self._encoder_cpr = -1
 
         # Temporarily assign to self.endpoints purely for convenience
-        self.endpoints = eps
+        self.endpoint_descriptors = eps
         di = self.device_info
         self.fw_version = '.'.join([str(di.fw_major), str(di.fw_minor), str(di.fw_patch)])
 
         # Now reassign filtered endpoints
-        self.endpoints = { key:value for (key,value) in eps.items() if (("from_version" not in value) or
+        self.endpoint_descriptors = { key:value for (key,value) in eps.items() if (("from_version" not in value) or
                 (parse_version(self.fw_version) >= parse_version(value["from_version"]))) }
 
+        self.endpoints = {}
+
     def __getattr__(self, attr):
-        if attr in self.endpoints:
-            d = self.endpoints[attr]
-            if d["type"] == "w":
-                return WriteEndpoint(d, self.iface)
-            elif d["type"] == "r":
-                return ReadEndpoint(d, self.iface)
-            raise AttributeError("Invalid attribute type (not in {'r', 'w', 'rw'})")
+        if attr not in self.endpoints:
+            d = Endpoint(self.endpoint_descriptors[attr])
+            self.endpoints[attr] = d
+        return self.endpoints[attr]
 
     def __dir__(self):
-        return list(self.endpoints.keys())
+        return list(self.endpoint_descriptors.keys())
 
     def calibrate(self):
         self.set_state(1)
