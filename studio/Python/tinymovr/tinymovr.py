@@ -20,7 +20,7 @@ import numbers
 import json
 from pkg_resources import parse_version
 from tinymovr.iface import CAN, CANBusCodec, DataType
-from tinymovr import Endpoint, endpoints_map
+from tinymovr import EndpointObject, endpoints_map
 
 class Tinymovr:
 
@@ -29,6 +29,8 @@ class Tinymovr:
         self.iface = iface
         self.codec = codec
         self._encoder_cpr = -1
+
+        self.endpoints = {}
 
         # Temporarily assign to self.endpoints purely for convenience
         self.endpoint_descriptors = eps
@@ -39,11 +41,9 @@ class Tinymovr:
         self.endpoint_descriptors = { key:value for (key,value) in eps.items() if (("from_version" not in value) or
                 (parse_version(self.fw_version) >= parse_version(value["from_version"]))) }
 
-        self.endpoints = {}
-
     def __getattr__(self, attr):
         if attr not in self.endpoints:
-            d = Endpoint(self.endpoint_descriptors[attr])
+            d = EndpointObject(self.endpoint_descriptors[attr], self.iface)
             self.endpoints[attr] = d
         return self.endpoints[attr]
 

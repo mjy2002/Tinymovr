@@ -13,50 +13,61 @@ FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 this program. If not, see <http://www.gnu.org/licenses/>.
 '''
-
+from copy import copy
 from tinymovr.iface import DataType
 
 
-class Endpoint:
+class EndpointObject:
 
     def __init__(self, descriptor, iface):
-        self.descriptor = descriptor
+        self._descriptor = descriptor
         self.iface = iface
 
-    def values(self):
-        with self.descriptor as d:
-            assert("r" in d["type"], "Endpoint is not writeable")
-            self.iface.send_new(self.node_id, d["ep_id"], rtr=True)
-            payload = self.iface.receive(self.node_id, d["ep_id"])
-            return self.codec.deserialize(payload, *d["types"])
+    def value(self):
+        assert (self.readable), "Endpoint is not writeable"
+        d = self._descriptor
+        self.iface.send_new(self.node_id, d["ep_id"], rtr=True)
+        payload = self.iface.receive(self.node_id, d["ep_id"])
+        return self.codec.deserialize(payload, *d["types"])
 
     def __call__(self, *args, **kwargs):
-        assert(len(args) == 0 or len(kwargs) == 0)
-        with self.descriptor as d:
-            assert("w" in d["type"], "Endpoint is not writeable")
-            if len(kwargs) > 0:
-                assert("labels" in d)
-                f_args = [kwargs[k] for k in d["labels"]]
-            else:
-                f_args = copy.copy(args)
-            if "types" in d:
-                slack = len(d["types"]) - len(f_args)
-                if slack > 0:
-                    slack_defaults = d["defaults"][-slack:]
-                    f_args = f_args + slack_defaults
-                payload = self.codec.serialize(f_args, *d["types"])
-                self.iface.send_new(self.node_id, d["ep_id"], payload=payload)
-            else:
-                self.iface.send_new(self.node_id, d["ep_id"])
+        assert (len(args) == 0 or len(kwargs) == 0)
+        assert (self.writeable), "Endpoint is not writeable"
+        d = self._descriptor
+        if len(kwargs) > 0:
+            assert("labels" in d)
+            f_args = [kwargs[k] for k in d["labels"]]
+        else:
+            f_args = copy(args)
+        if "types" in d:
+            slack = len(d["types"]) - len(f_args)
+            if slack > 0:
+                slack_defaults = d["defaults"][-slack:]
+                f_args = f_args + slack_defaults
+            payload = self.codec.serialize(f_args, *d["types"])
+            self.iface.send_new(self.node_id, d["ep_id"], payload=payload)
+        else:
+            self.iface.send_new(self.node_id, d["ep_id"])
+    
+    @property
+    def readable(self):
+        return "r" in self._descriptor["type"]
+
+    @property
+    def writeable(self):
+        return "w" in self._descriptor["type"]
 
     def __getattr__(self, name):
-            return self.values()[name]
+        pass
+
+    def __setattr__(self, name, value):
+        pass       
 
     def __repr__(self):
-        return str(self.values())
+        return str(self.value())
 
 
-endpoints_map: Dict[str, Dict] = {
+endpoints_map = {
     "nmt":
     {
         "description": "CANOpen NMT Message",
