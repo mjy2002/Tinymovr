@@ -31,12 +31,11 @@ class Tinymovr:
         self._encoder_cpr = -1
 
         self.endpoints = {}
-
         # Temporarily assign to self.endpoints purely for convenience
         self.endpoint_descriptors = eps
         di = self.device_info
         self.fw_version = '.'.join([str(di.fw_major), str(di.fw_minor), str(di.fw_patch)])
-
+        
         # Now reassign filtered endpoints
         self.endpoint_descriptors = { key:value for (key,value) in eps.items() if (("from_version" not in value) or
                 (parse_version(self.fw_version) >= parse_version(value["from_version"]))) }

@@ -23,13 +23,6 @@ class EndpointObject:
         self._parent = parent
         self._descriptor = descriptor
 
-    def value(self):
-        assert (self.readable), "Endpoint is not writeable"
-        d = self._descriptor
-        self.iface.send_new(self._parent.node_id, d["ep_id"], rtr=True)
-        payload = self.iface.receive(self.node_id, d["ep_id"])
-        return self.codec.deserialize(payload, *d["types"])
-
     def __call__(self, *args, **kwargs):
         assert (len(args) == 0 or len(kwargs) == 0)
         assert (self.writeable), "Endpoint is not writeable"
@@ -49,6 +42,13 @@ class EndpointObject:
         else:
             self.iface.send_new(self.node_id, d["ep_id"])
     
+    def get_values(self):
+        assert (self.readable), "Endpoint is not readable"
+        d = self._descriptor
+        self.iface.send_new(self.node_id, d["ep_id"], rtr=True)
+        payload = self.iface.receive(self.node_id, d["ep_id"])
+        return dict(zip(d["labels"], self.codec.deserialize(payload, *d["types"])))
+
     @property
     def readable(self):
         return "r" in self._descriptor["type"]
@@ -60,16 +60,20 @@ class EndpointObject:
     @property
     def iface(self):
         return self._parent.iface
+    
+    @property
+    def codec(self):
+        return self._parent.codec
 
     @property
     def node_id(self):
         return self._parent.node_id
     
     def __getattr__(self, name):
-        return self.value()[name]
+        return self.get_values()[name]
 
     def __repr__(self):
-        return str(self.value())
+        return str(self.get_values())
 
 
 endpoints_map = {
